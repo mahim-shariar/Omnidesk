@@ -14,6 +14,7 @@
 2. [How It Works (Architecture)](#how-it-works-architecture)
 3. [Android App Installation](#android-app-installation)
 4. [Companion Server Setup](#companion-server-setup)
+   - [🌐 Universal Setup (Any OS)](#-universal-one-command-setup-works-on-any-os)
    - [🐧 Linux Setup (Ubuntu, Debian, Fedora, Arch, openSUSE)](#-linux-setup)
    - [🍏 macOS Setup (Apple Silicon & Intel)](#-macos-setup)
    - [🪟 Windows Setup (Windows 10, 11)](#-windows-setup)
@@ -96,6 +97,39 @@ gradle :app:assembleDebug
 ## 💻 Companion Server Setup
 
 The companion server is located in the `omnidesk-server/` directory. It requires **Python 3.8 or newer**.
+
+---
+
+### 🌐 Universal One-Command Setup (Works on ANY OS)
+
+If you have Python 3 installed, you can launch the **interactive step-by-step setup wizard** on any operating system with a single universal command:
+
+```bash
+# On Linux & macOS:
+cd omnidesk-server && python3 setup.py
+
+# On Windows (Command Prompt / PowerShell):
+cd omnidesk-server && python setup.py
+```
+
+The universal wizard guides you step-by-step:
+1. ✅ **OS & Architecture Detection**: Identifies whether you are on Windows, macOS (Apple Silicon or Intel), or Linux.
+2. 📦 **Virtual Environment & Dependencies**: Automatically creates an isolated `.venv` and installs required packages (`websockets`, `psutil`, `pyautogui`, `pynput`, `zeroconf`).
+3. 🛡️ **Firewall & Permissions**: Walks you through opening firewall ports (8765 TCP, 8766 UDP) and granting OS permissions (macOS Accessibility/Input Monitoring or Linux `/dev/uinput` gamepad rules).
+4. 🚀 **Background Daemon & Autostart**: Prompts you to configure automatic launch on system boot (LaunchAgent on Mac, systemd on Linux, or Windows Startup folder).
+5. 🎯 **Instant Launch**: Starts the server, prints your local IP address, active 6-digit PIN, and renders an interactive pairing QR code in the terminal!
+
+#### ⚡ Quick OS Command Cheat-Sheet
+| Action | 🪟 Windows (CMD / PowerShell) | 🍏 macOS (Terminal) | 🐧 Linux (Terminal) |
+|---|---|---|---|
+| **Universal Setup Wizard** | `python setup.py` | `python3 setup.py` | `python3 setup.py` |
+| **Guided OS Installer** | `install.bat` | `./install-mac.sh` | `./install.sh` |
+| **Interactive Run (with QR)**| `run.bat` | `./run-mac.sh` | `./run.sh` |
+| **Run in Background** | `start-background.bat` | `./start-background-mac.sh` | `./start-background.sh` |
+| **Autostart on Boot** | `autostart-windows.bat enable` | `./autostart-mac.sh enable` | `./autostart-linux.sh` |
+| **Check Live Status & PIN** | `status-windows.bat` | `./status.sh` | `./status.sh` |
+| **Stop Server** | `stop-windows.bat` | `./stop-mac.sh` | `./stop.sh` |
+| **Complete Command Reference**| [`COMMANDS_ALL_OS.txt`](omnidesk-server/COMMANDS_ALL_OS.txt) | [`COMMANDS_ALL_OS.txt`](omnidesk-server/COMMANDS_ALL_OS.txt) | [`COMMANDS_ALL_OS.txt`](omnidesk-server/COMMANDS_ALL_OS.txt) |
 
 ---
 
