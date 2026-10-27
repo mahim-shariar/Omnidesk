@@ -1,0 +1,21 @@
+[Unit]
+Description=OmniDesk Companion Server
+After=network.target
+
+[Service]
+Type=simple
+Environment="DISPLAY=:0"
+Environment="PYTHONUNBUFFERED=1"
+Environment="XAUTHORITY=%h/.Xauthority"
+ExecStart=%h/.local/share/omnidesk/venv/bin/python3 %h/.local/share/omnidesk/server.py
+Restart=on-failure
+RestartSec=5
+StartLimitIntervalSec=60
+StartLimitBurst=5
+WorkingDirectory=%h/.local/share/omnidesk
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=default.target
+

@@ -1,0 +1,602 @@
+================================================================================
+           OMNIDESK - UNIVERSAL MASTER COMMAND REFERENCE
+              ALL COMMANDS FOR ALL OPERATING SYSTEMS (WINDOWS, MACOS, LINUX)
+================================================================================
+
+QUICK START - BEGINNER-FRIENDLY INTERACTIVE SETUP WIZARDS:
+--------------------------------------------------------------------------------
+OmniDesk includes an interactive step-by-step setup wizard that guides you through
+prompts one by one, detects dependencies, configures permissions/firewalls, and
+starts the server with pairing PIN & QR code:
+
+  • Windows : Double-click or run:  cd omnidesk-server && install.bat
+  • macOS   : Open Terminal and run: cd omnidesk-server && ./install-mac.sh
+  • Linux   : Open Terminal and run: cd omnidesk-server && ./install.sh
+  • Universal (Any OS):              cd omnidesk-server && python3 setup.py
+
+Companion Server Ports:
+  • TCP 8765  - WebSocket Control & Telemetry stream
+  • UDP 8766  - Local Network UDP Discovery Broadcast
+  • UDP 5353  - mDNS / Zeroconf Discovery (_linuxremote._tcp / _omnidesk._tcp)
+
+================================================================================
+TABLE OF CONTENTS
+================================================================================
+1. WINDOWS COMMANDS (CMD & PowerShell)
+   1.1 Prerequisites & Installation
+   1.2 Windows Firewall Configuration
+   1.3 Starting the Server
+   1.4 Finding Your Windows Local IP & Pairing PIN
+   1.5 Running as a Windows Background Service / Auto-Start
+   1.6 Process Management & Killing Hanging Instances
+   1.7 USB Cable Mode (Zero-Latency / No Wi-Fi)
+   1.8 Direct Windows System Control Commands
+
+2. MACOS COMMANDS (Terminal / Zsh / Bash)
+   2.1 Prerequisites & Homebrew Installation
+   2.2 macOS Permissions (Accessibility & Input Monitoring)
+   2.3 macOS Firewall Configuration
+   2.4 Starting the Server
+   2.5 Finding Your Mac Local IP & Pairing PIN
+   2.6 Running as a macOS Background Daemon (LaunchAgent)
+   2.7 Process Management & Port Inspection
+   2.8 USB Cable Mode (Zero-Latency / No Wi-Fi)
+   2.9 Direct macOS System Control Commands
+
+3. LINUX COMMANDS (Linux Mint, Ubuntu, Debian, Arch, Fedora)
+   3.1 Automated & Manual Installation
+   3.2 Linux Firewall Configuration (UFW & Firewalld)
+   3.3 Systemd Service Management (Status, Restart, Logs, Stop)
+   3.4 Finding Your Linux Local IP & Pairing PIN
+   3.5 Process Management & Port Inspection
+   3.6 USB Cable Mode (Zero-Latency / No Wi-Fi)
+   3.7 Direct Linux System Control Commands
+   3.8 Uninstallation & Cleanup
+
+4. CROSS-PLATFORM NETWORK & WEBSOCKET VERIFICATION TOOLS
+   4.1 Testing Port Availability
+   4.2 Testing WebSocket Connection with CLI tools
+   4.3 One-Line Python Quick Server Test
+
+================================================================================
+1. WINDOWS COMMANDS (Command Prompt / PowerShell)
+================================================================================
+
+--------------------------------------------------------------------------------
+1.1 Prerequisites & Installation (Windows)
+--------------------------------------------------------------------------------
+# Check if Python is installed:
+python --version
+
+# If Python is not installed, install via Winget (Windows Package Manager):
+winget install Python.Python.3.11
+
+# Navigate to the companion server directory:
+cd omnidesk-server
+
+# Upgrade pip to latest version:
+python -m pip install --upgrade pip
+
+# Install server dependencies:
+python -m pip install -r requirements.txt
+
+# Or run the included automated Windows installer script:
+install.bat
+
+--------------------------------------------------------------------------------
+1.2 Windows Firewall Configuration (Ports 8765 TCP, 8766 UDP)
+--------------------------------------------------------------------------------
+# Option A: In an elevated (Administrator) Command Prompt (CMD):
+netsh advfirewall firewall add rule name="OmniDesk WebSocket" dir=in action=allow protocol=TCP localport=8765
+netsh advfirewall firewall add rule name="OmniDesk Discovery" dir=in action=allow protocol=UDP localport=8766
+
+# Option B: In an elevated (Administrator) PowerShell:
+New-NetFirewallRule -DisplayName "OmniDesk WebSocket" -Direction Inbound -LocalPort 8765 -Protocol TCP -Action Allow
+New-NetFirewallRule -DisplayName "OmniDesk Discovery" -Direction Inbound -LocalPort 8766 -Protocol UDP -Action Allow
+
+# Check existing firewall rules:
+netsh advfirewall firewall show rule name="OmniDesk WebSocket"
+
+--------------------------------------------------------------------------------
+1.3 Starting the Server (Windows)
+--------------------------------------------------------------------------------
+# Interactive launch (Command Prompt):
+python server.py
+
+# Launch using the provided batch launcher (double-click in Explorer or run):
+run.bat
+
+# Launch silently in background without console window (using pythonw):
+start pythonw server.py
+
+--------------------------------------------------------------------------------
+1.4 Finding Your Windows Local IP & Pairing PIN
+--------------------------------------------------------------------------------
+# Find your Windows Wi-Fi / Ethernet local IP address:
+ipconfig
+# Look for "IPv4 Address", e.g., 192.168.1.50
+
+# Quick PowerShell command to show only IPv4 addresses:
+Get-NetIPAddress -AddressFamily IPv4 | Where-Object { $_.InterfaceAlias -notlike "*Loopback*" } | Select-Object IPAddress, InterfaceAlias
+
+# View current 6-digit pairing PIN code:
+type "%USERPROFILE%\.config\omnidesk\current_pin.txt"
+# Or in PowerShell:
+Get-Content "$env:USERPROFILE\.config\omnidesk\current_pin.txt"
+
+# View authorized paired devices and tokens:
+type "%USERPROFILE%\.config\omnidesk\tokens.json"
+
+--------------------------------------------------------------------------------
+1.5 Running in Background & Windows Auto-Start (Closing Window Won't Kill Server)
+--------------------------------------------------------------------------------
+# One-click background launch (Detached from terminal):
+start-background.bat
+
+# Configure Autostart on Windows Logon (Silent Background Service):
+autostart-windows.bat enable
+
+# Disable Autostart:
+autostart-windows.bat disable
+
+# Check Autostart & Background Status:
+status-windows.bat
+
+# Manual Method 1: Add to Windows Startup folder (runs on login):
+# Press Win + R, type `shell:startup`, and press Enter.
+# Place `run-invisible.vbs` or a shortcut to `start-background.bat` there.
+
+# Manual Method 2: Create a Windows Scheduled Task to run silently at logon:
+schtasks /create /tn "OmniDeskServer" /tr "wscript.exe \"%CD%\run-invisible.vbs\"" /sc onlogon /rl highest /f
+
+# To delete the Scheduled Task:
+schtasks /delete /tn "OmniDeskServer" /f
+
+--------------------------------------------------------------------------------
+1.6 Process Management & Stopping Server (Windows)
+--------------------------------------------------------------------------------
+# One-click stop:
+stop-windows.bat
+
+# Check if port 8765 is listening:
+netstat -ano | findstr :8765
+
+# Kill process listening on port 8765 (replace <PID> with the number from netstat):
+taskkill /F /PID <PID>
+
+# Kill all python instances running the server:
+taskkill /F /IM python.exe
+taskkill /F /IM pythonw.exe
+
+--------------------------------------------------------------------------------
+1.7 USB Cable Mode (Windows)
+--------------------------------------------------------------------------------
+# Verify Android device is connected via USB and USB debugging is enabled:
+adb devices
+
+# Set up reverse port forwarding (routes phone localhost:8765 -> PC:8765):
+adb reverse tcp:8765 tcp:8765
+
+# Check active reverse forwards:
+adb reverse --list
+
+# Remove reverse port forwarding when done:
+adb reverse --remove tcp:8765
+
+--------------------------------------------------------------------------------
+1.8 Direct Windows System Control Commands (What the server triggers)
+--------------------------------------------------------------------------------
+# Lock Workstation:
+rundll32.exe user32.dll,LockWorkStation
+
+# Suspend / Sleep:
+rundll32.exe powrprof.dll,SetSuspendState 0,1,0
+
+# Restart PC immediately:
+shutdown /r /t 0
+
+# Shutdown PC immediately:
+shutdown /s /t 0
+
+# Toggle Desktop / Minimize all windows (PowerShell):
+powershell -NoProfile -c "(New-Object -ComObject Shell.Application).ToggleDesktop()"
+
+# Launch an application by name or path:
+powershell -NoProfile -c "Start-Process 'notepad.exe'"
+powershell -NoProfile -c "Start-Process 'calc.exe'"
+
+
+================================================================================
+2. MACOS COMMANDS (Terminal / Zsh / Bash)
+================================================================================
+
+--------------------------------------------------------------------------------
+2.1 Prerequisites & Installation (macOS)
+--------------------------------------------------------------------------------
+# Install Homebrew (if not already installed):
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+# Install Python 3:
+brew install python3
+
+# Navigate to the companion server directory:
+cd omnidesk-server
+
+# Make helper scripts executable:
+chmod +x run-mac.sh run.sh install.sh
+
+# Create Python virtual environment and install requirements:
+python3 -m venv venv
+./venv/bin/pip install --upgrade pip
+./venv/bin/pip install -r requirements.txt
+
+--------------------------------------------------------------------------------
+2.2 macOS Permissions (CRITICAL FOR MOUSE & KEYBOARD CONTROL)
+--------------------------------------------------------------------------------
+# macOS requires explicit permission for controlling mouse/keyboard input:
+# Go to:
+#   Apple Menu () -> System Settings -> Privacy & Security -> Accessibility
+# Add and enable:
+#   • Terminal (or iTerm2)
+#   • Python3 (e.g. /usr/local/bin/python3 or Homebrew Python)
+# Also go to:
+#   Apple Menu () -> System Settings -> Privacy & Security -> Input Monitoring
+# Add and enable:
+#   • Terminal (or iTerm2)
+
+--------------------------------------------------------------------------------
+2.3 macOS Firewall Configuration
+--------------------------------------------------------------------------------
+# If macOS Application Firewall is enabled, allow incoming connections:
+sudo /usr/libexec/ApplicationFirewall/socketfilterfw --setglobalstate on
+sudo /usr/libexec/ApplicationFirewall/socketfilterfw --add /usr/local/bin/python3
+sudo /usr/libexec/ApplicationFirewall/socketfilterfw --unblockapp /usr/local/bin/python3
+
+--------------------------------------------------------------------------------
+2.4 Starting the Server (macOS)
+--------------------------------------------------------------------------------
+# Quick launch using the macOS helper:
+./run-mac.sh
+
+# Or direct launch using Python:
+./venv/bin/python3 server.py
+# Or with system Python:
+python3 server.py
+
+# Launch in background with output redirected to log file:
+nohup python3 server.py > server.log 2>&1 &
+
+--------------------------------------------------------------------------------
+2.5 Finding Your Mac Local IP & Pairing PIN
+--------------------------------------------------------------------------------
+# Find your Wi-Fi local IP:
+ipconfig getifaddr en0
+# Or for Ethernet (en1):
+ipconfig getifaddr en1
+
+# View all active network interface IPs:
+ifconfig | grep "inet " | grep -v 127.0.0.1
+
+# View current 6-digit pairing PIN code:
+cat ~/.config/omnidesk/current_pin.txt
+
+# View pairing token file:
+cat ~/.config/omnidesk/tokens.json
+
+--------------------------------------------------------------------------------
+2.6 Running in Background & macOS Auto-Start (Closing Terminal Won't Kill Server)
+--------------------------------------------------------------------------------
+# One-click start in background (Safe to close terminal):
+./start-background-mac.sh
+# Or:
+./run-mac.sh --background
+
+# Configure Autostart on macOS Login (LaunchAgent):
+./autostart-mac.sh enable
+
+# Check live background status & active pairing PIN:
+./status.sh
+# Or:
+./autostart-mac.sh status
+
+# Stop background server:
+./stop-mac.sh
+
+# Disable LaunchAgent autostart:
+./autostart-mac.sh disable
+
+# View live server logs:
+./autostart-mac.sh logs
+# Or:
+tail -f ~/Library/Logs/OmniDesk.log
+
+--------------------------------------------------------------------------------
+2.7 Process Management & Port Inspection (macOS)
+--------------------------------------------------------------------------------
+# One-click stop:
+./stop-mac.sh
+# Check what process is using port 8765:
+lsof -i :8765
+
+# Kill process on port 8765:
+kill -9 $(lsof -t -i :8765)
+
+# Kill any running server.py:
+pkill -f "python3.*server.py"
+
+--------------------------------------------------------------------------------
+2.8 USB Cable Mode (macOS)
+--------------------------------------------------------------------------------
+# Install adb via Homebrew (if not already installed):
+brew install android-platform-tools
+
+# Verify Android device is connected:
+adb devices
+
+# Set up reverse port forwarding (routes phone localhost:8765 -> Mac:8765):
+adb reverse tcp:8765 tcp:8765
+
+# View active reverse forwardings:
+adb reverse --list
+
+# Remove reverse forwarding:
+adb reverse --remove tcp:8765
+
+--------------------------------------------------------------------------------
+2.9 Direct macOS System Control Commands (What the server triggers)
+--------------------------------------------------------------------------------
+# Lock Screen:
+pmset displaysleepnow
+# Or via loginwindow:
+osascript -e 'tell application "loginwindow" to «event aevtrlgo»'
+
+# Sleep Mac:
+pmset sleepnow
+
+# Restart Mac:
+osascript -e 'tell application "System Events" to restart'
+
+# Shut Down Mac:
+osascript -e 'tell application "System Events" to shut down'
+
+# Show Desktop (Mission Control F11 / key code 103):
+osascript -e 'tell application "System Events" to key code 103'
+
+# Take screenshot of primary screen:
+screencapture -x /tmp/screenshot.png
+
+# Media / Audio Volume Controls:
+osascript -e "set volume output volume 50"          # Set volume to 50%
+osascript -e "set volume output muted true"         # Mute
+osascript -e "set volume output muted false"        # Unmute
+osascript -e 'tell application "Music" to playpause' # Play/Pause Apple Music
+osascript -e 'tell application "Spotify" to playpause' # Play/Pause Spotify
+
+# Launch an Application:
+open -a "Safari"
+open -a "Google Chrome"
+open -a "Visual Studio Code"
+
+
+================================================================================
+3. LINUX COMMANDS (Linux Mint Cinnamon, Ubuntu, Debian, Arch, Fedora)
+================================================================================
+
+--------------------------------------------------------------------------------
+3.1 Automated & Manual Installation (Linux)
+--------------------------------------------------------------------------------
+# Automated Install (Recommended for Linux Mint / Ubuntu / Debian):
+cd omnidesk-server
+chmod +x install.sh uninstall.sh status.sh usb-cable-enable.sh run.sh
+./install.sh
+
+# Manual Install Step-by-Step:
+# 1. Install system utilities:
+# On Ubuntu / Linux Mint / Debian:
+sudo apt update && sudo apt install -y python3 python3-pip python3-venv xdotool playerctl libnotify-bin
+# On Fedora:
+sudo dnf install -y python3 python3-pip xdotool playerctl libnotify
+# On Arch Linux / Manjaro:
+sudo pacman -S --needed python python-pip xdotool playerctl libnotify
+
+# 2. Create Python virtual environment in user directory:
+mkdir -p "$HOME/.local/share/omnidesk"
+python3 -m venv "$HOME/.local/share/omnidesk/venv"
+"$HOME/.local/share/omnidesk/venv/bin/pip" install --upgrade pip
+"$HOME/.local/share/omnidesk/venv/bin/pip" install -r requirements.txt
+
+# 3. Create and enable systemd user service:
+mkdir -p "$HOME/.config/systemd/user"
+cp remote.service "$HOME/.config/systemd/user/omnidesk.service"
+systemctl --user daemon-reload
+systemctl --user enable --now omnidesk.service
+
+--------------------------------------------------------------------------------
+3.2 Linux Firewall Configuration (UFW & Firewalld)
+--------------------------------------------------------------------------------
+# For Ubuntu / Linux Mint (UFW - Uncomplicated Firewall):
+sudo ufw allow 8765/tcp comment 'Linux Remote WebSocket'
+sudo ufw allow 8766/udp comment 'Linux Remote UDP Discovery'
+sudo ufw allow 5353/udp comment 'mDNS / Zeroconf'
+sudo ufw reload
+sudo ufw status verbose
+
+# For Fedora / CentOS / RHEL (Firewalld):
+sudo firewall-cmd --permanent --add-port=8765/tcp
+sudo firewall-cmd --permanent --add-port=8766/udp
+sudo firewall-cmd --permanent --add-port=5353/udp
+sudo firewall-cmd --reload
+sudo firewall-cmd --list-all
+
+# For Arch / iptables:
+sudo iptables -A INPUT -p tcp --dport 8765 -j ACCEPT
+sudo iptables -A INPUT -p udp --dport 8766 -j ACCEPT
+sudo iptables -A INPUT -p udp --dport 5353 -j ACCEPT
+
+--------------------------------------------------------------------------------
+3.3 Systemd Service Management (Linux)
+--------------------------------------------------------------------------------
+# Check service status (compact, 1-screen, no pager):
+systemctl --user status omnidesk.service --no-pager -n 5
+
+# Or run the built-in status helper:
+./status.sh
+
+# View live streaming logs and pairing PIN in real time:
+journalctl --user -u omnidesk.service -f
+
+# Clean restart (automatically stops any duplicate instances):
+pkill -f "python3.*server.py" 2>/dev/null
+systemctl --user restart omnidesk.service
+
+# Stop the service:
+systemctl --user stop omnidesk.service
+
+# Disable service from auto-starting on boot:
+systemctl --user disable omnidesk.service
+
+# Reload systemd user daemon after editing unit file:
+systemctl --user daemon-reload
+
+# Run manually in foreground (for testing or debugging):
+./run.sh
+
+--------------------------------------------------------------------------------
+3.4 Finding Your Linux Local IP & Pairing PIN
+--------------------------------------------------------------------------------
+# Find your Linux PC's local IP address:
+hostname -I | awk '{print $1}'
+# Or full network details:
+ip -4 addr show
+
+# View current 6-digit pairing PIN code:
+cat ~/.config/omnidesk/current_pin.txt
+
+# View paired devices and tokens:
+cat ~/.config/omnidesk/tokens.json
+
+--------------------------------------------------------------------------------
+3.5 Process Management & Port Inspection (Linux)
+--------------------------------------------------------------------------------
+# Check if port 8765 is listening:
+ss -tulpn | grep 8765
+# Or:
+netstat -tulpn | grep 8765
+
+# Kill any process holding port 8765:
+fuser -k 8765/tcp
+
+# Kill all instances of the companion server:
+pkill -f "python3.*server.py"
+
+--------------------------------------------------------------------------------
+3.6 USB Cable Mode (Linux)
+--------------------------------------------------------------------------------
+# Install adb (Android Debug Bridge):
+sudo apt install -y adb
+
+# Connect phone with USB Debugging enabled, then run:
+./usb-cable-enable.sh
+
+# Or manually run:
+adb devices
+adb reverse tcp:8765 tcp:8765
+
+# Check active reverse connections:
+adb reverse --list
+
+# Remove reverse connection:
+adb reverse --remove tcp:8765
+
+--------------------------------------------------------------------------------
+3.7 Direct Linux System Control Commands (What the server triggers)
+--------------------------------------------------------------------------------
+# Lock Screen (Cinnamon / GNOME / FreeDesktop):
+cinnamon-screensaver-command -l
+# Or:
+xdg-screensaver lock
+# Or:
+loginctl lock-session
+
+# Suspend / Sleep:
+systemctl suspend
+
+# Restart / Reboot:
+systemctl reboot
+
+# Shut Down / Power Off:
+systemctl poweroff
+
+# Show Desktop (Cinnamon / X11):
+xdotool key --clearmodifiers Super+d
+
+# Media playback (using playerctl):
+playerctl play-pause
+playerctl next
+playerctl previous
+playerctl volume 0.05+
+playerctl volume 0.05-
+
+# Volume / Mute (PulseAudio / PipeWire):
+pactl set-sink-volume @DEFAULT_SINK@ +5%
+pactl set-sink-volume @DEFAULT_SINK@ -5%
+pactl set-sink-mute @DEFAULT_SINK@ toggle
+
+# Launch installed desktop app by .desktop ID:
+gtk-launch google-chrome.desktop
+gtk-launch nemo.desktop
+gtk-launch gnome-terminal.desktop
+
+--------------------------------------------------------------------------------
+3.8 Uninstallation & Cleanup (Linux)
+--------------------------------------------------------------------------------
+# Run the automated uninstaller:
+./uninstall.sh
+
+# Or manual removal:
+systemctl --user stop omnidesk.service
+systemctl --user disable omnidesk.service
+rm -f "$HOME/.config/systemd/user/omnidesk.service"
+systemctl --user daemon-reload
+rm -rf "$HOME/.local/share/omnidesk"
+rm -rf "$HOME/.config/omnidesk"
+
+
+================================================================================
+4. CROSS-PLATFORM NETWORK & WEBSOCKET VERIFICATION TOOLS
+================================================================================
+
+--------------------------------------------------------------------------------
+4.1 Testing Port Availability from another machine on local network
+--------------------------------------------------------------------------------
+# From Linux or macOS terminal:
+nc -zv <PC-IP-ADDRESS> 8765
+# Example: nc -zv 192.168.1.50 8765
+
+# From Windows PowerShell:
+Test-NetConnection -ComputerName <PC-IP-ADDRESS> -Port 8765
+# Example: Test-NetConnection -ComputerName 192.168.1.50 -Port 8765
+
+--------------------------------------------------------------------------------
+4.2 Testing WebSocket Connection with Websocat (CLI WebSocket Client)
+--------------------------------------------------------------------------------
+# Install websocat:
+# macOS: brew install websocat
+# Linux: sudo apt install websocat  (or download prebuilt binary)
+# Windows: winget install websocat
+
+# Connect to server:
+websocat ws://<PC-IP-ADDRESS>:8765
+
+# Once connected, send this JSON to pair with your 6-digit PIN:
+{"action":"pair","pin":"<YOUR-6-DIGIT-PIN>","client_name":"My-CLI-Tester"}
+
+--------------------------------------------------------------------------------
+4.3 One-Line Python Quick Server Verification Script
+--------------------------------------------------------------------------------
+# Run this on the PC to verify that all Python server scripts compile cleanly:
+python3 -c "import py_compile; [py_compile.compile(f, doraise=True) for f in ['server.py','status.py','media.py','system_control.py','keyboard.py','mouse.py','discovery.py','authentication.py']]; print('ALL MODULES COMPILED SUCCESSFULLY!')"
+
+================================================================================
+END OF COMMAND REFERENCE
+================================================================================

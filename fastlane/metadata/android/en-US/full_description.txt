@@ -1,0 +1,16 @@
+OmniDesk transforms your Android phone into an ultra-low-latency wireless remote control for your Windows, macOS, or Linux computer.
+
+Features:
+• Precision Touchpad: Smooth multi-touch trackpad with adjustable sensitivity, scroll speed, tap-to-click, and drag lock.
+• Full Keyboard: Send text, function keys (F1-F12), and custom keyboard shortcuts (Ctrl+C, Alt+Tab, etc.).
+• Media Controls: Play/pause, track skip, and volume sliders for your PC sound system.
+• PC Controls & Status: Monitor CPU, RAM, battery telemetry, and execute power actions (Lock, Suspend, Restart, Shutdown).
+• Dual-Stick Virtual Gamepad: Turn your phone into an analog game controller.
+• App Launcher & System Shortcuts: Launch your favorite desktop applications and web bookmarks in one tap.
+• Presentation Remote: Slide changer with built-in presentation countdown timer and blank screen toggle.
+• Shared Clipboard: Seamless bidirectional clipboard synchronization between Android and your PC.
+• Wake-on-LAN: Turn on sleeping or powered-off computers remotely over your local network.
+• Triple-Mode Discovery: Zero-config Wi-Fi discovery (mDNS & UDP broadcast), active TCP sweep, QR code scanning, and USB cable support.
+
+Privacy & Freedom:
+100% Free and Open Source Software. No accounts, no cloud dependencies, no tracking, and no telemetry. All communication happens strictly within your local home network or direct USB connection.

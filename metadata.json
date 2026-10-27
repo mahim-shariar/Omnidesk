@@ -1,0 +1,8 @@
+{
+  "name": "OmniDesk",
+  "description": "Control your PC from your Android phone over local Wi-Fi with touchpad mouse, keyboard, media, and system controls.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
